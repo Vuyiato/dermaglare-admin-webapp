@@ -14,7 +14,8 @@ export async function testFirestoreConnection() {
   console.log("🧪 Testing Firestore connection...");
 
   try {
-    const testRef = collection(db, "chats");
+    // Just test that we can create a collection reference
+    collection(db, "chats");
     console.log("✅ Firestore reference created successfully");
     return true;
   } catch (error) {

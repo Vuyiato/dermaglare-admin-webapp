@@ -13,7 +13,6 @@ import {
   query,
   orderBy,
   Timestamp,
-  setDoc,
 } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
