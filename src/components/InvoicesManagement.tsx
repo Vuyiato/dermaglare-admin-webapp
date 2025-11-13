@@ -26,6 +26,7 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("All");
 
@@ -185,40 +186,47 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
   };
 
   const handleCreateInvoice = async () => {
-    const newInvoice: Omit<Invoice, "id"> = {
-      invoiceNumber: generateInvoiceNumber(),
-      patientId: users[0]?.id || "",
-      patientName: users[0]?.displayName || "Unknown Patient",
-      patientEmail: users[0]?.email || "",
-      items: [
-        {
-          id: "1",
-          description: "Consultation Fee",
-          quantity: 1,
-          unitPrice: 500,
-          total: 500,
-        },
-      ],
-      subtotal: 500,
-      tax: 75,
-      total: 575,
-      status: "Draft",
-      issueDate: new Date().toISOString().split("T")[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0],
-      createdAt: Timestamp.now(),
-    };
-
+    setIsCreating(true);
     try {
+      const newInvoice: Omit<Invoice, "id"> = {
+        invoiceNumber: generateInvoiceNumber(),
+        patientId: users[0]?.id || "",
+        patientName: users[0]?.displayName || "Unknown Patient",
+        patientEmail: users[0]?.email || "",
+        items: [
+          {
+            id: "1",
+            description: "Consultation Fee",
+            quantity: 1,
+            unitPrice: 500,
+            total: 500,
+          },
+        ],
+        subtotal: 500,
+        tax: 75,
+        total: 575,
+        status: "Draft",
+        issueDate: new Date().toISOString().split("T")[0],
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        createdAt: Timestamp.now(),
+      };
+
+      console.log("Creating invoice:", newInvoice);
       const docRef = await addDoc(collection(db, "invoices"), newInvoice);
+      console.log("Invoice created with ID:", docRef.id);
+
       setInvoices([...invoices, { id: docRef.id, ...newInvoice }]);
       setShowModal(false);
-    } catch (error) {
+      alert("✅ Invoice created successfully!");
+    } catch (error: any) {
       console.error("Error creating invoice:", error);
+      alert(`❌ Error creating invoice: ${error.message || "Unknown error"}`);
+    } finally {
+      setIsCreating(false);
     }
   };
-
   const handleUpdateInvoiceStatus = async (
     invoiceId: string,
     newStatus: Invoice["status"]
@@ -695,17 +703,19 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={handleCreateInvoice}
-                  className="flex-1 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-brand-yellow to-brand-yellow-dark text-gray-900 hover:shadow-lg transform hover:scale-105 transition-all"
+                  disabled={isCreating}
+                  className="flex-1 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-brand-yellow to-brand-yellow-dark text-gray-900 hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  Create Invoice
+                  {isCreating ? "Creating..." : "Create Invoice"}
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
+                  disabled={isCreating}
                   className={`flex-1 px-6 py-3 rounded-lg font-semibold ${
                     isDark
                       ? "bg-gray-700 text-white hover:bg-gray-600"
                       : "bg-gray-200 text-gray-900 hover:bg-gray-300"
-                  } transition-colors`}
+                  } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   Cancel
                 </button>
