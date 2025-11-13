@@ -828,92 +828,96 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
                 </div>
 
                 {/* Paid Appointments Selection */}
-                {selectedPatientId && (
-                  <div>
-                    <label
-                      className={`block text-sm font-medium mb-2 ${
-                        isDark ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      Select Paid Services *
-                    </label>
-                    <div
-                      className={`border rounded-lg p-3 max-h-60 overflow-y-auto ${
-                        isDark ? "border-gray-600" : "border-gray-300"
-                      }`}
-                    >
-                      {appointments.filter(
-                        (apt) =>
-                          apt.userEmail ===
-                          users.find((u) => u.id === selectedPatientId)?.email
-                      ).length === 0 ? (
-                        <p
-                          className={`text-sm ${
-                            isDark ? "text-gray-400" : "text-gray-600"
+                {selectedPatientId &&
+                  (() => {
+                    const selectedUser = users.find(
+                      (u) => u.id === selectedPatientId
+                    );
+                    const userEmail = selectedUser?.email;
+                    const patientAppointments = appointments.filter(
+                      (apt) => apt.userEmail === userEmail
+                    );
+
+                    return (
+                      <div>
+                        <label
+                          className={`block text-sm font-medium mb-2 ${
+                            isDark ? "text-white" : "text-gray-900"
                           }`}
                         >
-                          No paid appointments found for this patient
-                        </p>
-                      ) : (
-                        appointments
-                          .filter(
-                            (apt) =>
-                              apt.userEmail ===
-                              users.find((u) => u.id === selectedPatientId)
-                                ?.email
-                          )
-                          .map((apt) => (
-                            <label
-                              key={apt.id}
-                              className={`flex items-center gap-3 p-2 rounded hover:bg-opacity-10 cursor-pointer ${
-                                isDark ? "hover:bg-white" : "hover:bg-gray-900"
+                          Select Paid Services *
+                        </label>
+                        <div
+                          className={`border rounded-lg p-3 max-h-60 overflow-y-auto ${
+                            isDark ? "border-gray-600" : "border-gray-300"
+                          }`}
+                        >
+                          {patientAppointments.length === 0 ? (
+                            <p
+                              className={`text-sm ${
+                                isDark ? "text-gray-400" : "text-gray-600"
                               }`}
                             >
-                              <input
-                                type="checkbox"
-                                checked={selectedAppointments.includes(apt.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedAppointments([
-                                      ...selectedAppointments,
-                                      apt.id,
-                                    ]);
-                                  } else {
-                                    setSelectedAppointments(
-                                      selectedAppointments.filter(
-                                        (id) => id !== apt.id
-                                      )
-                                    );
-                                  }
-                                }}
-                                className="w-4 h-4"
-                              />
-                              <div className="flex-1">
-                                <p
-                                  className={`text-sm font-medium ${
-                                    isDark ? "text-white" : "text-gray-900"
-                                  }`}
-                                >
-                                  {apt.serviceName}
-                                </p>
-                                <p
-                                  className={`text-xs ${
-                                    isDark ? "text-gray-400" : "text-gray-600"
-                                  }`}
-                                >
-                                  {new Date(
-                                    apt.appointmentDate?.toDate?.() ||
-                                      apt.appointmentDate
-                                  ).toLocaleDateString()}{" "}
-                                  - R{apt.amount}
-                                </p>
-                              </div>
-                            </label>
-                          ))
-                      )}
-                    </div>
-                  </div>
-                )}
+                              No paid appointments found for this patient
+                            </p>
+                          ) : (
+                            patientAppointments.map((apt) => (
+                              <label
+                                key={apt.id}
+                                className={`flex items-center gap-3 p-2 rounded hover:bg-opacity-10 cursor-pointer ${
+                                  isDark
+                                    ? "hover:bg-white"
+                                    : "hover:bg-gray-900"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedAppointments.includes(
+                                    apt.id
+                                  )}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedAppointments([
+                                        ...selectedAppointments,
+                                        apt.id,
+                                      ]);
+                                    } else {
+                                      setSelectedAppointments(
+                                        selectedAppointments.filter(
+                                          (id) => id !== apt.id
+                                        )
+                                      );
+                                    }
+                                  }}
+                                  className="w-4 h-4"
+                                />
+                                <div className="flex-1">
+                                  <p
+                                    className={`text-sm font-medium ${
+                                      isDark ? "text-white" : "text-gray-900"
+                                    }`}
+                                  >
+                                    {apt.serviceName}
+                                  </p>
+                                  <p
+                                    className={`text-xs ${
+                                      isDark ? "text-gray-400" : "text-gray-600"
+                                    }`}
+                                  >
+                                    {new Date(
+                                      apt.appointmentDate?.toDate?.() ||
+                                        apt.appointmentDate
+                                    ).toLocaleDateString()}{" "}
+                                    - R{apt.amount}
+                                  </p>
+                                </div>
+                              </label>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
               </div>
 
               <div className="flex gap-3">
