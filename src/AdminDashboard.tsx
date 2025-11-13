@@ -99,6 +99,7 @@ interface Appointment {
   id: string;
   userId: string;
   userName?: string;
+  userEmail?: string;
   date: string;
   time: string;
   status: "Pending" | "Confirmed" | "Completed" | "Cancelled";
@@ -2376,7 +2377,6 @@ const AdminDashboard: React.FC = () => {
       });
       console.log("✅ Users fetched:", usersData.length, "users");
       console.log("✅ Full users array:", usersData);
-      setUsers(usersData);
 
       const appointmentsSnapshot = await getDocs(
         collection(db, "appointments")
@@ -2391,6 +2391,32 @@ const AdminDashboard: React.FC = () => {
         appointmentsData
       );
       setAppointments(appointmentsData);
+
+      // Extract unique users from appointments that might not be in users collection
+      const appointmentUsers = new Map<string, AppUser>();
+      appointmentsData.forEach((apt) => {
+        if (
+          apt.userEmail &&
+          !usersData.find((u) => u.email === apt.userEmail)
+        ) {
+          appointmentUsers.set(apt.userEmail, {
+            id: apt.userEmail.replace(/[@.]/g, "_"),
+            email: apt.userEmail,
+            displayName: apt.userName || apt.userEmail.split("@")[0],
+            role: "patient",
+            isActive: true,
+          } as AppUser);
+        }
+      });
+
+      // Merge Firestore users with users from appointments
+      const allUsers = [...usersData, ...Array.from(appointmentUsers.values())];
+      console.log(
+        "✅ Total users (including from appointments):",
+        allUsers.length,
+        "users"
+      );
+      setUsers(allUsers);
     } catch (error) {
       console.error("❌ Error fetching data:", error);
     } finally {
