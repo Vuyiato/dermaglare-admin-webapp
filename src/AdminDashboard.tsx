@@ -17,6 +17,8 @@ import {
   query,
   where,
   updateDoc,
+  deleteDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import {
@@ -492,12 +494,9 @@ const LoginPage: React.FC<{
               </motion.button>
 
               <div className="text-center mt-6">
-                <a
-                  href="#"
-                  className="text-brand-yellow hover:text-brand-yellow-light text-sm font-medium transition-colors"
-                >
-                  Forgot your password?
-                </a>
+                <p className="text-gray-400 text-sm">
+                  Contact technical support to assist with resetting password
+                </p>
               </div>
             </form>
           </motion.div>
@@ -1125,6 +1124,31 @@ const UserManagementView = ({
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete user "${userName}"?\n\nThis action cannot be undone and will permanently remove the user from the system.`
+    );
+
+    if (!confirmDelete) return;
+
+    setIsUpdating(true);
+    try {
+      // Delete user document from Firestore
+      await deleteDoc(doc(db, "users", userId));
+
+      alert(`✅ User "${userName}" deleted successfully!`);
+      setEditingUser(null);
+
+      // Refresh the page to show updated data
+      window.location.reload();
+    } catch (error: any) {
+      console.error("❌ Error deleting user:", error);
+      alert(`Error deleting user: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   // Helper function to get user's display name from multiple possible fields
   const getUserDisplayName = (user: AppUser): string => {
     // Try different name fields in order of preference
@@ -1511,6 +1535,15 @@ const UserManagementView = ({
                         Cancel
                       </button>
                     </div>
+                    <button
+                      onClick={() =>
+                        handleDeleteUser(user.id, getUserDisplayName(user))
+                      }
+                      disabled={isUpdating}
+                      className="w-full mt-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
+                    >
+                      {isUpdating ? "Deleting..." : "🗑️ Delete User"}
+                    </button>
                   </div>
                 ) : (
                   <button
@@ -2259,6 +2292,7 @@ const AdminDashboard: React.FC = () => {
 
   const [users, setUsers] = useState<AppUser[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
 
   useEffect(() => {
@@ -2368,6 +2402,31 @@ const AdminDashboard: React.FC = () => {
     if (!user) return;
     fetchData();
   }, [user]);
+
+  // Listen to unread chats for notification count
+  useEffect(() => {
+    if (!user) return;
+
+    const chatsQuery = query(
+      collection(db, "chats"),
+      where("unreadByAdmin", "==", true)
+    );
+    const unsubscribe = onSnapshot(
+      chatsQuery,
+      (snapshot) => {
+        setUnreadCount(snapshot.size);
+      },
+      (error) => {
+        console.error("Error listening to chats:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleNotificationClick = () => {
+    setCurrentPage("Chat Management");
+  };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -2525,6 +2584,8 @@ const AdminDashboard: React.FC = () => {
       handleLogout={handleLogout}
       userEmail={user?.displayName || user?.email}
       theme={theme}
+      unreadNotifications={unreadCount}
+      onNotificationClick={handleNotificationClick}
     >
       {renderPage()}
     </Layout>

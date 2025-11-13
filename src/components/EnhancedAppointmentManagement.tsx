@@ -535,6 +535,7 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
       const appointmentRef = doc(db, "appointments", selectedAppointment.id);
       await updateDoc(appointmentRef, {
         status: "confirmed",
+        paymentStatus: "paid", // Mark payment as paid to update revenue
         confirmedAt: serverTimestamp(),
         adminNotes: adminNotes || null,
         updatedAt: serverTimestamp(),
@@ -1075,7 +1076,7 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={() => setShowDetailModal(false)}
           >
             <motion.div
@@ -1367,34 +1368,42 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
               </div>
 
               <div className="flex gap-4">
-                <button
-                  onClick={handleApprove}
-                  disabled={actionLoading}
-                  className={`flex-1 py-3 rounded-md font-semibold ${
-                    isDark
-                      ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
-                      : "bg-green-100 text-green-700 hover:bg-green-200"
-                  } disabled:opacity-50`}
-                >
-                  {actionLoading ? "Approving..." : "✓ Approve"}
-                </button>
-                <button
-                  onClick={handleDecline}
-                  disabled={actionLoading}
-                  className={`flex-1 py-3 rounded-md font-semibold ${
-                    isDark
-                      ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                      : "bg-red-100 text-red-700 hover:bg-red-200"
-                  } disabled:opacity-50`}
-                >
-                  {actionLoading ? "Declining..." : "✕ Decline"}
-                </button>
+                {/* Only show Approve button if not already cancelled/declined */}
+                {selectedAppointment.status?.toLowerCase() !== "cancelled" && (
+                  <button
+                    onClick={handleApprove}
+                    disabled={actionLoading}
+                    className={`flex-1 py-3 rounded-md font-semibold ${
+                      isDark
+                        ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                        : "bg-green-100 text-green-700 hover:bg-green-200"
+                    } disabled:opacity-50`}
+                  >
+                    {actionLoading ? "Approving..." : "✓ Approve"}
+                  </button>
+                )}
+                {/* Only show Decline button if not already cancelled/declined */}
+                {selectedAppointment.status?.toLowerCase() !== "cancelled" && (
+                  <button
+                    onClick={handleDecline}
+                    disabled={actionLoading}
+                    className={`flex-1 py-3 rounded-md font-semibold ${
+                      isDark
+                        ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                        : "bg-red-100 text-red-700 hover:bg-red-200"
+                    } disabled:opacity-50`}
+                  >
+                    {actionLoading ? "Declining..." : "✕ Decline"}
+                  </button>
+                )}
                 <button
                   onClick={() => setShowApprovalModal(false)}
                   disabled={actionLoading}
                   className={`px-6 py-3 rounded-md ${buttonClasses} disabled:opacity-50`}
                 >
-                  Cancel
+                  {selectedAppointment.status?.toLowerCase() === "cancelled"
+                    ? "Close"
+                    : "Cancel"}
                 </button>
               </div>
             </motion.div>

@@ -13,6 +13,7 @@ import {
   query,
   orderBy,
   Timestamp,
+  getDoc,
 } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -104,7 +105,7 @@ export const EnhancedChatManagement: React.FC<EnhancedChatManagementProps> = ({
 
     const unsubscribe = onSnapshot(
       chatsQuery,
-      (snapshot) => {
+      async (snapshot) => {
         console.log("📥 Chats snapshot received:", snapshot.size, "chats");
 
         if (snapshot.empty) {
@@ -114,21 +115,59 @@ export const EnhancedChatManagement: React.FC<EnhancedChatManagementProps> = ({
           console.log("  2. Login as a patient");
           console.log("  3. Send a test message");
           console.log("  4. Refresh this page");
+          setChats([]);
+          setIsLoadingChats(false);
+          return;
         }
 
-        const chatsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          console.log("💬 Chat:", doc.id, data);
-          return {
-            id: doc.id,
-            patientId: data.patientId || "",
-            patientName: data.patientName || "Unknown Patient",
-            lastMessageText: data.lastMessageText || "",
-            lastMessageTimestamp: data.lastMessageTimestamp || Timestamp.now(),
-            unreadByPatient: data.unreadByPatient || 0,
-            unreadByAdmin: data.unreadByAdmin || false,
-          } as Chat;
-        });
+        // Fetch patient names from users collection
+        const chatsData = await Promise.all(
+          snapshot.docs.map(async (chatDoc) => {
+            const data = chatDoc.data();
+            let patientName = data.patientName || "Unknown Patient";
+
+            // If patientName is "Patient" or generic, fetch actual name from users collection
+            if (
+              data.patientId &&
+              (!data.patientName ||
+                data.patientName === "Patient" ||
+                data.patientName === "Unknown Patient")
+            ) {
+              try {
+                const userDoc = await getDoc(doc(db, "users", data.patientId));
+                if (userDoc.exists()) {
+                  const userData = userDoc.data();
+                  // Try firstName, then name, then email
+                  patientName =
+                    userData.firstName ||
+                    userData.name ||
+                    userData.email?.split("@")[0] ||
+                    "Unknown Patient";
+                  console.log(
+                    `✅ Fetched patient name: ${patientName} for chat ${chatDoc.id}`
+                  );
+                }
+              } catch (error) {
+                console.error(
+                  `⚠️ Error fetching user ${data.patientId}:`,
+                  error
+                );
+              }
+            }
+
+            console.log("💬 Chat:", chatDoc.id, data);
+            return {
+              id: chatDoc.id,
+              patientId: data.patientId || "",
+              patientName,
+              lastMessageText: data.lastMessageText || "",
+              lastMessageTimestamp:
+                data.lastMessageTimestamp || Timestamp.now(),
+              unreadByPatient: data.unreadByPatient || 0,
+              unreadByAdmin: data.unreadByAdmin || false,
+            } as Chat;
+          })
+        );
 
         // Sort manually if we couldn't use orderBy
         chatsData.sort((a, b) => {

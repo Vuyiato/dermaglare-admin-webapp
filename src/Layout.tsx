@@ -18,6 +18,8 @@ interface LayoutProps {
   userEmail: string | null | undefined;
   children: React.ReactNode;
   theme: "light" | "dark";
+  unreadNotifications?: number;
+  onNotificationClick?: () => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -28,8 +30,11 @@ export const Layout: React.FC<LayoutProps> = ({
   userEmail,
   children,
   theme,
+  unreadNotifications = 0,
+  onNotificationClick,
 }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const isDark = theme === "dark";
 
@@ -335,11 +340,15 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="flex items-center gap-4">
             {/* Quick Actions */}
             <motion.div
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 relative"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
               <motion.button
+                onClick={
+                  onNotificationClick ||
+                  (() => setShowNotifications(!showNotifications))
+                }
                 className={`p-2 rounded-lg ${
                   isDark ? "hover:bg-white/10" : "hover:bg-brand-yellow/10"
                 } transition-colors relative`}
@@ -360,8 +369,169 @@ export const Layout: React.FC<LayoutProps> = ({
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                   />
                 </svg>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
+                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                  </span>
+                )}
               </motion.button>
+
+              {/* Notifications Dropdown */}
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className={`absolute top-full right-0 mt-2 w-80 rounded-xl shadow-2xl overflow-hidden z-50 ${
+                      isDark
+                        ? "bg-gray-800 border border-white/10"
+                        : "bg-white border border-gray-200"
+                    }`}
+                  >
+                    <div
+                      className={`p-4 ${
+                        isDark ? "bg-gray-900/50" : "bg-brand-yellow/10"
+                      } border-b ${
+                        isDark ? "border-white/10" : "border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-lg">Notifications</h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            isDark
+                              ? "bg-brand-yellow/20 text-brand-yellow"
+                              : "bg-brand-teal/20 text-brand-teal"
+                          }`}
+                        >
+                          {unreadNotifications} new
+                        </span>
+                      </div>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                      {unreadNotifications > 0 ? (
+                        <>
+                          <button
+                            onClick={() => setCurrentPage("Chat Management")}
+                            className={`w-full p-4 text-left ${
+                              isDark ? "hover:bg-white/5" : "hover:bg-gray-50"
+                            } border-b ${
+                              isDark ? "border-white/5" : "border-gray-100"
+                            } transition-colors`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                                <svg
+                                  className="w-5 h-5 text-blue-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                  />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">
+                                  New Messages
+                                </p>
+                                <p
+                                  className={`text-xs ${
+                                    isDark ? "text-gray-400" : "text-gray-500"
+                                  } mt-1`}
+                                >
+                                  You have unread messages from patients
+                                </p>
+                                <p className="text-xs text-blue-500 mt-1">
+                                  Click to view →
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() =>
+                              setCurrentPage("Appointment Management")
+                            }
+                            className={`w-full p-4 text-left ${
+                              isDark ? "hover:bg-white/5" : "hover:bg-gray-50"
+                            } transition-colors`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                                <svg
+                                  className="w-5 h-5 text-yellow-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">
+                                  Pending Appointments
+                                </p>
+                                <p
+                                  className={`text-xs ${
+                                    isDark ? "text-gray-400" : "text-gray-500"
+                                  } mt-1`}
+                                >
+                                  New appointments waiting for approval
+                                </p>
+                                <p className="text-xs text-yellow-500 mt-1">
+                                  Click to review →
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        </>
+                      ) : (
+                        <div className="p-8 text-center">
+                          <svg
+                            className={`w-12 h-12 mx-auto mb-3 ${
+                              isDark ? "text-gray-600" : "text-gray-400"
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <p
+                            className={`text-sm font-semibold ${
+                              isDark ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            All caught up!
+                          </p>
+                          <p
+                            className={`text-xs ${
+                              isDark ? "text-gray-500" : "text-gray-400"
+                            } mt-1`}
+                          >
+                            No new notifications
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </div>
         </motion.header>
