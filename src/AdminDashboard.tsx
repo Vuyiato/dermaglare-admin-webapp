@@ -40,7 +40,7 @@ import { Bar, Doughnut } from "react-chartjs-2";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Layout } from "./Layout";
 import EnhancedAppointmentManagement from "./components/EnhancedAppointmentManagement";
-import { ChatManagement } from "./components/chat/ChatManagement";
+import EnhancedChatManagement from "./components/chat/EnhancedChatManagement";
 import InvoicesManagement from "./components/InvoicesManagement";
 import AppointmentDataMigration from "./components/AppointmentDataMigration";
 import dermaglareLogo from "./assets/dermaglare-logo.png";
@@ -2448,7 +2448,7 @@ const AdminDashboard: React.FC = () => {
       case "Invoices":
         return <InvoicesManagement theme={theme} users={users} />;
       case "Chat Management":
-        return <ChatManagement theme={theme} user={user} />;
+        return <EnhancedChatManagement theme={theme} />;
       case "User Sync":
         return (
           <UserSyncView theme={theme} onSyncComplete={() => fetchData()} />
