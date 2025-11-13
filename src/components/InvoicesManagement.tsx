@@ -30,6 +30,13 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("All");
 
+  // Form states for creating invoice
+  const [selectedPatientId, setSelectedPatientId] = useState("");
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [selectedAppointments, setSelectedAppointments] = useState<string[]>(
+    []
+  );
+
   const isDark = theme === "dark";
 
   // Fetch invoices from Firestore
@@ -185,26 +192,79 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
     return `INV-${year}${month}-${random}`;
   };
 
+  // Fetch paid appointments when modal opens
+  useEffect(() => {
+    if (showModal) {
+      fetchPaidAppointments();
+    }
+  }, [showModal]);
+
+  const fetchPaidAppointments = async () => {
+    try {
+      const appointmentsSnapshot = await getDocs(
+        collection(db, "appointments")
+      );
+      const paidAppts = appointmentsSnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((apt: any) => apt.paymentStatus?.toLowerCase() === "paid");
+
+      console.log("💰 Paid appointments:", paidAppts);
+      setAppointments(paidAppts);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    }
+  };
+
   const handleCreateInvoice = async () => {
+    // Validation
+    if (!selectedPatientId) {
+      alert("⚠️ Please select a patient");
+      return;
+    }
+    if (selectedAppointments.length === 0) {
+      alert("⚠️ Please select at least one paid appointment");
+      return;
+    }
+
     setIsCreating(true);
     try {
+      // Find selected patient
+      const patient = users.find((u) => u.id === selectedPatientId);
+      if (!patient) {
+        alert("❌ Patient not found");
+        return;
+      }
+
+      // Get selected appointments details
+      const selectedAppts = appointments.filter((apt) =>
+        selectedAppointments.includes(apt.id)
+      );
+
+      // Create invoice items from appointments
+      const items = selectedAppts.map((apt, index) => ({
+        id: String(index + 1),
+        description: apt.serviceName || "Service",
+        quantity: 1,
+        unitPrice: apt.amount || 0,
+        total: apt.amount || 0,
+      }));
+
+      const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+      const tax = subtotal * 0.15;
+      const total = subtotal + tax;
+
       const newInvoice: Omit<Invoice, "id"> = {
         invoiceNumber: generateInvoiceNumber(),
-        patientId: users[0]?.id || "",
-        patientName: users[0]?.displayName || "Unknown Patient",
-        patientEmail: users[0]?.email || "",
-        items: [
-          {
-            id: "1",
-            description: "Consultation Fee",
-            quantity: 1,
-            unitPrice: 500,
-            total: 500,
-          },
-        ],
-        subtotal: 500,
-        tax: 75,
-        total: 575,
+        patientId: patient.id,
+        patientName: patient.displayName || patient.email || "Unknown Patient",
+        patientEmail: patient.email || "",
+        items,
+        subtotal,
+        tax,
+        total,
         status: "Draft",
         issueDate: new Date().toISOString().split("T")[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -215,28 +275,42 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
 
       console.log("Creating invoice:", newInvoice);
       console.log("Database instance:", db);
-      
+
       const docRef = await addDoc(collection(db, "invoices"), newInvoice);
       console.log("✅ Invoice created with ID:", docRef.id);
 
       setInvoices([...invoices, { id: docRef.id, ...newInvoice }]);
       setShowModal(false);
-      alert("✅ Invoice created successfully! Invoice #" + newInvoice.invoiceNumber);
+
+      // Reset form
+      setSelectedPatientId("");
+      setSelectedAppointments([]);
+
+      alert(
+        "✅ Invoice created successfully! Invoice #" + newInvoice.invoiceNumber
+      );
     } catch (error: any) {
       console.error("❌ Error creating invoice:", error);
       console.error("Error code:", error.code);
       console.error("Error name:", error.name);
-      
+
       let errorMessage = "Unknown error";
       if (error.code === "permission-denied") {
-        errorMessage = "Permission denied. Please check Firestore rules for 'invoices' collection.";
-      } else if (error.message?.includes("network") || error.message?.includes("fetch")) {
-        errorMessage = "Network error. Please check your internet connection or disable ad blockers.";
+        errorMessage =
+          "Permission denied. Please check Firestore rules for 'invoices' collection.";
+      } else if (
+        error.message?.includes("network") ||
+        error.message?.includes("fetch")
+      ) {
+        errorMessage =
+          "Network error. Please check your internet connection or disable ad blockers.";
       } else {
         errorMessage = error.message || "Unknown error";
       }
-      
-      alert(`❌ Error creating invoice: ${errorMessage}\n\nPlease check the browser console (F12) for more details.`);
+
+      alert(
+        `❌ Error creating invoice: ${errorMessage}\n\nPlease check the browser console (F12) for more details.`
+      );
     } finally {
       setIsCreating(false);
     }
@@ -708,12 +782,129 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
               >
                 Create New Invoice
               </h2>
-              <p
-                className={`mb-6 ${isDark ? "text-white/70" : "text-gray-600"}`}
-              >
-                A new invoice will be created as a draft. You can edit the
-                details and send it to the patient later.
-              </p>
+
+              <div className="space-y-4 mb-6">
+                {/* Patient Selection */}
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    Select Patient *
+                  </label>
+                  <select
+                    value={selectedPatientId}
+                    onChange={(e) => {
+                      setSelectedPatientId(e.target.value);
+                      setSelectedAppointments([]);
+                    }}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark
+                        ? "bg-gray-700 border-gray-600 text-white"
+                        : "bg-white border-gray-300 text-gray-900"
+                    }`}
+                  >
+                    <option value="">-- Choose a patient --</option>
+                    {users
+                      .filter((u) => u.role === "patient")
+                      .map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.displayName || user.email}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {/* Paid Appointments Selection */}
+                {selectedPatientId && (
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${
+                        isDark ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      Select Paid Services *
+                    </label>
+                    <div
+                      className={`border rounded-lg p-3 max-h-60 overflow-y-auto ${
+                        isDark ? "border-gray-600" : "border-gray-300"
+                      }`}
+                    >
+                      {appointments.filter(
+                        (apt) =>
+                          apt.userEmail ===
+                          users.find((u) => u.id === selectedPatientId)?.email
+                      ).length === 0 ? (
+                        <p
+                          className={`text-sm ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
+                          No paid appointments found for this patient
+                        </p>
+                      ) : (
+                        appointments
+                          .filter(
+                            (apt) =>
+                              apt.userEmail ===
+                              users.find((u) => u.id === selectedPatientId)
+                                ?.email
+                          )
+                          .map((apt) => (
+                            <label
+                              key={apt.id}
+                              className={`flex items-center gap-3 p-2 rounded hover:bg-opacity-10 cursor-pointer ${
+                                isDark ? "hover:bg-white" : "hover:bg-gray-900"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedAppointments.includes(apt.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedAppointments([
+                                      ...selectedAppointments,
+                                      apt.id,
+                                    ]);
+                                  } else {
+                                    setSelectedAppointments(
+                                      selectedAppointments.filter(
+                                        (id) => id !== apt.id
+                                      )
+                                    );
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                              <div className="flex-1">
+                                <p
+                                  className={`text-sm font-medium ${
+                                    isDark ? "text-white" : "text-gray-900"
+                                  }`}
+                                >
+                                  {apt.serviceName}
+                                </p>
+                                <p
+                                  className={`text-xs ${
+                                    isDark ? "text-gray-400" : "text-gray-600"
+                                  }`}
+                                >
+                                  {new Date(
+                                    apt.appointmentDate?.toDate?.() ||
+                                      apt.appointmentDate
+                                  ).toLocaleDateString()}{" "}
+                                  - R{apt.amount}
+                                </p>
+                              </div>
+                            </label>
+                          ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3">
                 <button
                   onClick={handleCreateInvoice}
