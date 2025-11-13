@@ -807,10 +807,21 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
                   >
                     <option value="">-- Choose a patient --</option>
                     {users
-                      .filter((u) => u.role === "patient")
+                      .filter(
+                        (u) =>
+                          u.role?.toLowerCase() === "patient" ||
+                          !u.role ||
+                          u.role?.toLowerCase() === "user"
+                      )
+                      .sort((a, b) => {
+                        const nameA = a.displayName || a.email || "";
+                        const nameB = b.displayName || b.email || "";
+                        return nameA.localeCompare(nameB);
+                      })
                       .map((user) => (
                         <option key={user.id} value={user.id}>
-                          {user.displayName || user.email}
+                          {user.displayName || user.email}{" "}
+                          {user.role ? `(${user.role})` : ""}
                         </option>
                       ))}
                   </select>
