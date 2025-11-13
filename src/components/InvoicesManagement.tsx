@@ -214,15 +214,29 @@ export const InvoicesManagement: React.FC<InvoicesManagementProps> = ({
       };
 
       console.log("Creating invoice:", newInvoice);
+      console.log("Database instance:", db);
+      
       const docRef = await addDoc(collection(db, "invoices"), newInvoice);
-      console.log("Invoice created with ID:", docRef.id);
+      console.log("✅ Invoice created with ID:", docRef.id);
 
       setInvoices([...invoices, { id: docRef.id, ...newInvoice }]);
       setShowModal(false);
-      alert("✅ Invoice created successfully!");
+      alert("✅ Invoice created successfully! Invoice #" + newInvoice.invoiceNumber);
     } catch (error: any) {
-      console.error("Error creating invoice:", error);
-      alert(`❌ Error creating invoice: ${error.message || "Unknown error"}`);
+      console.error("❌ Error creating invoice:", error);
+      console.error("Error code:", error.code);
+      console.error("Error name:", error.name);
+      
+      let errorMessage = "Unknown error";
+      if (error.code === "permission-denied") {
+        errorMessage = "Permission denied. Please check Firestore rules for 'invoices' collection.";
+      } else if (error.message?.includes("network") || error.message?.includes("fetch")) {
+        errorMessage = "Network error. Please check your internet connection or disable ad blockers.";
+      } else {
+        errorMessage = error.message || "Unknown error";
+      }
+      
+      alert(`❌ Error creating invoice: ${errorMessage}\n\nPlease check the browser console (F12) for more details.`);
     } finally {
       setIsCreating(false);
     }
