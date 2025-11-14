@@ -1689,8 +1689,9 @@ const UserSyncView = ({
                   isDark ? "text-green-400" : "text-green-700"
                 }`}
               >
-                Automatically create Firestore user records for all patients who
-                have appointments but aren't in the users collection yet.
+                Automatically creates/updates Firestore user records using
+                Firebase Auth UIDs from appointments. This ensures chat messages
+                and appointments are properly linked to users.
               </p>
             </div>
             <button
@@ -1724,9 +1725,9 @@ const UserSyncView = ({
                   const usersToUpdate = new Map<string, any>();
 
                   appointments.forEach((apt: any) => {
-                    if (apt.userEmail) {
-                      const userId =
-                        apt.userId || apt.userEmail.replace(/[@.]/g, "_");
+                    if (apt.userEmail && apt.userId) {
+                      // Use the Firebase Auth UID from the appointment
+                      const userId = apt.userId;
                       const userData = {
                         id: userId,
                         email: apt.userEmail,
@@ -1736,16 +1737,26 @@ const UserSyncView = ({
                         isActive: true,
                       };
 
-                      // Check if user exists
-                      if (existingUsers.has(apt.userEmail)) {
-                        const existingUser = existingUsers.get(apt.userEmail);
-                        // Update if missing id field
-                        if (!existingUser.id) {
-                          usersToUpdate.set(apt.userEmail, userData);
+                      // Check if user exists by email OR by userId
+                      const existingUserByEmail = existingUsers.get(
+                        apt.userEmail
+                      );
+                      let shouldUpdate = false;
+
+                      if (existingUserByEmail) {
+                        // Update if missing id field or if id doesn't match userId
+                        if (
+                          !existingUserByEmail.id ||
+                          existingUserByEmail.docId !== userId
+                        ) {
+                          usersToUpdate.set(userId, userData);
+                          shouldUpdate = true;
                         }
-                      } else {
-                        // New user to create
-                        usersToSync.set(apt.userEmail, {
+                      }
+
+                      if (!existingUserByEmail || !shouldUpdate) {
+                        // New user to create (use Firebase Auth UID as document ID)
+                        usersToSync.set(userId, {
                           ...userData,
                           createdAt: serverTimestamp(),
                         });
