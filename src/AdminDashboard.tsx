@@ -1732,7 +1732,7 @@ const UserSyncView = ({
 
                   // Sync users to Firestore
                   let syncedCount = 0;
-                  for (const [email, userData] of uniqueUsers) {
+                  for (const [, userData] of uniqueUsers) {
                     // Use the userId from userData (either from appointment or email-based)
                     const userRef = doc(db, "users", userData.id);
                     await setDoc(userRef, userData);
