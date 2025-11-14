@@ -1708,40 +1708,73 @@ const UserSyncView = ({
 
                   // Fetch existing users
                   const usersSnapshot = await getDocs(collection(db, "users"));
-                  const existingEmails = new Set(
-                    usersSnapshot.docs.map((doc) => doc.data().email)
-                  );
+                  const existingUsers = new Map<string, any>();
+                  usersSnapshot.docs.forEach((doc) => {
+                    const userData = doc.data();
+                    if (userData.email) {
+                      existingUsers.set(userData.email, {
+                        docId: doc.id,
+                        ...userData,
+                      });
+                    }
+                  });
 
-                  // Find unique emails from appointments that aren't in users collection
-                  const uniqueUsers = new Map<string, any>();
+                  // Find users to create or update
+                  const usersToSync = new Map<string, any>();
+                  const usersToUpdate = new Map<string, any>();
+
                   appointments.forEach((apt: any) => {
-                    if (apt.userEmail && !existingEmails.has(apt.userEmail)) {
+                    if (apt.userEmail) {
                       const userId =
                         apt.userId || apt.userEmail.replace(/[@.]/g, "_");
-                      uniqueUsers.set(apt.userEmail, {
+                      const userData = {
                         id: userId,
                         email: apt.userEmail,
                         displayName:
                           apt.userName || apt.userEmail.split("@")[0],
                         role: "patient",
                         isActive: true,
-                        createdAt: serverTimestamp(),
-                      });
+                      };
+
+                      // Check if user exists
+                      if (existingUsers.has(apt.userEmail)) {
+                        const existingUser = existingUsers.get(apt.userEmail);
+                        // Update if missing id field
+                        if (!existingUser.id) {
+                          usersToUpdate.set(apt.userEmail, userData);
+                        }
+                      } else {
+                        // New user to create
+                        usersToSync.set(apt.userEmail, {
+                          ...userData,
+                          createdAt: serverTimestamp(),
+                        });
+                      }
                     }
                   });
 
-                  // Sync users to Firestore
+                  // Create new users and update existing ones
                   let syncedCount = 0;
-                  for (const [, userData] of uniqueUsers) {
-                    // Use the userId from userData (either from appointment or email-based)
+                  let updatedCount = 0;
+
+                  // Create new users
+                  for (const [, userData] of usersToSync) {
                     const userRef = doc(db, "users", userData.id);
                     await setDoc(userRef, userData);
                     syncedCount++;
                   }
 
+                  // Update existing users missing id field
+                  for (const [, userData] of usersToUpdate) {
+                    const userRef = doc(db, "users", userData.id);
+                    await setDoc(userRef, userData, { merge: true });
+                    updatedCount++;
+                  }
+
+                  const totalCount = syncedCount + updatedCount;
                   setMessage({
                     type: "success",
-                    text: `✅ Successfully synced ${syncedCount} users from appointments to Firestore!`,
+                    text: `✅ Successfully synced ${totalCount} users (${syncedCount} new, ${updatedCount} updated)!`,
                   });
 
                   // Refresh
