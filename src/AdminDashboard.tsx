@@ -1716,7 +1716,10 @@ const UserSyncView = ({
                   const uniqueUsers = new Map<string, any>();
                   appointments.forEach((apt: any) => {
                     if (apt.userEmail && !existingEmails.has(apt.userEmail)) {
+                      const userId =
+                        apt.userId || apt.userEmail.replace(/[@.]/g, "_");
                       uniqueUsers.set(apt.userEmail, {
+                        id: userId,
                         email: apt.userEmail,
                         displayName:
                           apt.userName || apt.userEmail.split("@")[0],
@@ -1730,11 +1733,8 @@ const UserSyncView = ({
                   // Sync users to Firestore
                   let syncedCount = 0;
                   for (const [email, userData] of uniqueUsers) {
-                    const userRef = doc(
-                      db,
-                      "users",
-                      email.replace(/[@.]/g, "_")
-                    );
+                    // Use the userId from userData (either from appointment or email-based)
+                    const userRef = doc(db, "users", userData.id);
                     await setDoc(userRef, userData);
                     syncedCount++;
                   }
