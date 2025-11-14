@@ -13,6 +13,7 @@ import {
   orderBy,
   Timestamp,
   getDoc,
+  getDocs,
 } from "firebase/firestore";
 import { motion } from "framer-motion";
 import type { User } from "firebase/auth";
@@ -94,8 +95,27 @@ export const ChatManagement: React.FC<ChatManagementProps> = ({
           const data = chatDoc.data();
           let userName = data.userName || "Unknown Patient";
 
+          // Try to get senderId from the most recent message
+          let senderId = null;
+          try {
+            const messagesQuery = query(
+              collection(db, "chats", chatDoc.id, "messages"),
+              orderBy("timestamp", "desc")
+            );
+            const messagesSnapshot = await getDocs(messagesQuery);
+            if (!messagesSnapshot.empty) {
+              const firstMessage = messagesSnapshot.docs[0].data();
+              if (firstMessage.senderType === "patient") {
+                senderId = firstMessage.senderId;
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching messages:", error);
+          }
+
           // Try multiple methods to find the user
           const possibleUserIds = [
+            senderId,
             data.userId,
             data.patientId,
             chatDoc.id,
