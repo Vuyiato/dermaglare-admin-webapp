@@ -12,6 +12,7 @@ import {
   query,
   orderBy,
   Timestamp,
+  getDoc,
 } from "firebase/firestore";
 import { motion } from "framer-motion";
 import type { User } from "firebase/auth";
@@ -87,13 +88,36 @@ export const ChatManagement: React.FC<ChatManagementProps> = ({
       orderBy("lastMessageAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
-      const threads = snapshot.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-          } as ChatThread)
+    const unsubscribe = onSnapshot(chatsQuery, async (snapshot) => {
+      const threads = await Promise.all(
+        snapshot.docs.map(async (chatDoc) => {
+          const data = chatDoc.data();
+          let userName = data.userName || "Unknown Patient";
+
+          // Fetch actual patient name from users collection if available
+          if (data.userId) {
+            try {
+              const userDoc = await getDoc(doc(db, "users", data.userId));
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                userName =
+                  userData.displayName ||
+                  userData.firstName ||
+                  userData.name ||
+                  userData.email?.split("@")[0] ||
+                  userName;
+              }
+            } catch (error) {
+              console.error("Error fetching user data:", error);
+            }
+          }
+
+          return {
+            id: chatDoc.id,
+            ...data,
+            userName,
+          } as ChatThread;
+        })
       );
 
       setChatThreads(threads);
