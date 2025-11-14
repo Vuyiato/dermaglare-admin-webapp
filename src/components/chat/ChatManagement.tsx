@@ -94,21 +94,33 @@ export const ChatManagement: React.FC<ChatManagementProps> = ({
           const data = chatDoc.data();
           let userName = data.userName || "Unknown Patient";
 
-          // Fetch actual patient name from users collection if available
-          if (data.userId) {
+          // Try multiple methods to find the user
+          const possibleUserIds = [
+            data.userId,
+            data.patientId,
+            chatDoc.id,
+            data.userEmail?.replace(/[@.]/g, "_"),
+          ].filter(Boolean);
+
+          for (const userId of possibleUserIds) {
             try {
-              const userDoc = await getDoc(doc(db, "users", data.userId));
+              const userDoc = await getDoc(doc(db, "users", userId));
               if (userDoc.exists()) {
                 const userData = userDoc.data();
-                userName =
+                const fetchedName =
                   userData.displayName ||
                   userData.firstName ||
                   userData.name ||
-                  userData.email?.split("@")[0] ||
-                  userName;
+                  userData.email?.split("@")[0];
+
+                if (fetchedName && fetchedName !== "Patient") {
+                  userName = fetchedName;
+                  break; // Found a valid name, stop searching
+                }
               }
             } catch (error) {
-              console.error("Error fetching user data:", error);
+              // Continue to next possible ID
+              continue;
             }
           }
 
