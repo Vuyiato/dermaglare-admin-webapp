@@ -1741,7 +1741,6 @@ const UserSyncView = ({
                       const existingUserByEmail = existingUsers.get(
                         apt.userEmail
                       );
-                      let shouldUpdate = false;
 
                       if (existingUserByEmail) {
                         // Update if missing id field or if id doesn't match userId
@@ -1750,11 +1749,8 @@ const UserSyncView = ({
                           existingUserByEmail.docId !== userId
                         ) {
                           usersToUpdate.set(userId, userData);
-                          shouldUpdate = true;
                         }
-                      }
-
-                      if (!existingUserByEmail || !shouldUpdate) {
+                      } else {
                         // New user to create (use Firebase Auth UID as document ID)
                         usersToSync.set(userId, {
                           ...userData,
@@ -1768,8 +1764,15 @@ const UserSyncView = ({
                   let syncedCount = 0;
                   let updatedCount = 0;
 
+                  console.log(
+                    `Found ${usersToSync.size} users to create, ${usersToUpdate.size} to update`
+                  );
+
                   // Create new users
                   for (const [, userData] of usersToSync) {
+                    console.log(
+                      `Creating user with ID: ${userData.id}, displayName: ${userData.displayName}`
+                    );
                     const userRef = doc(db, "users", userData.id);
                     await setDoc(userRef, userData);
                     syncedCount++;
@@ -1777,6 +1780,9 @@ const UserSyncView = ({
 
                   // Update existing users missing id field
                   for (const [, userData] of usersToUpdate) {
+                    console.log(
+                      `Updating user with ID: ${userData.id}, displayName: ${userData.displayName}`
+                    );
                     const userRef = doc(db, "users", userData.id);
                     await setDoc(userRef, userData, { merge: true });
                     updatedCount++;
