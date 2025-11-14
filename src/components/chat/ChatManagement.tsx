@@ -127,13 +127,34 @@ export const ChatManagement: React.FC<ChatManagementProps> = ({
               const userDoc = await getDoc(doc(db, "users", userId));
               if (userDoc.exists()) {
                 const userData = userDoc.data();
-                const fetchedName =
-                  userData.displayName ||
-                  userData.firstName ||
-                  userData.name ||
-                  userData.email?.split("@")[0];
 
-                if (fetchedName && fetchedName !== "Patient") {
+                // Build a proper name
+                let fetchedName = "";
+
+                if (userData.firstName && userData.lastName) {
+                  fetchedName = `${userData.firstName} ${userData.lastName}`;
+                } else if (userData.firstName) {
+                  fetchedName = userData.firstName;
+                } else if (
+                  userData.displayName &&
+                  !userData.displayName.includes("@") &&
+                  userData.displayName.length <= 20
+                ) {
+                  fetchedName = userData.displayName;
+                } else if (userData.name) {
+                  fetchedName = userData.name;
+                } else if (
+                  userData.email &&
+                  !userData.email.includes("@temporary.com")
+                ) {
+                  fetchedName = userData.email.split("@")[0];
+                }
+
+                if (
+                  fetchedName &&
+                  fetchedName !== "Patient" &&
+                  !fetchedName.match(/^[A-Za-z0-9]{8}$/)
+                ) {
                   userName = fetchedName;
                   break; // Found a valid name, stop searching
                 }

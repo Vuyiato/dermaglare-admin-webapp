@@ -2017,6 +2017,91 @@ const UserSyncView = ({
           </div>
         </motion.div>
 
+        {/* Cleanup Temp Users */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.15 }}
+          className={`p-4 rounded-xl ${
+            isDark
+              ? "bg-red-500/10 border-red-500/30"
+              : "bg-red-50 border-red-200"
+          } border`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3
+                className={`font-semibold text-sm ${
+                  isDark ? "text-red-300" : "text-red-900"
+                }`}
+              >
+                🗑️ Clean Up Temporary Chat Users
+              </h3>
+              <p
+                className={`text-xs mt-1 ${
+                  isDark ? "text-red-400" : "text-red-700"
+                }`}
+              >
+                Remove users with temporary emails that were synced from chats
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                if (
+                  !confirm(
+                    "Are you sure you want to delete users with @temporary.com emails?"
+                  )
+                )
+                  return;
+
+                setIsSyncing(true);
+                setMessage(null);
+                try {
+                  const usersSnapshot = await getDocs(collection(db, "users"));
+                  let deletedCount = 0;
+
+                  for (const userDoc of usersSnapshot.docs) {
+                    const userData = userDoc.data();
+                    if (
+                      userData.email &&
+                      userData.email.includes("@temporary.com")
+                    ) {
+                      await deleteDoc(doc(db, "users", userDoc.id));
+                      deletedCount++;
+                      console.log(`Deleted temporary user: ${userDoc.id}`);
+                    }
+                  }
+
+                  setMessage({
+                    type: "success",
+                    text: `✅ Deleted ${deletedCount} temporary users!`,
+                  });
+
+                  setTimeout(() => {
+                    onSyncComplete();
+                  }, 1500);
+                } catch (error: any) {
+                  console.error("Error cleaning up users:", error);
+                  setMessage({
+                    type: "error",
+                    text: `❌ Error: ${error.message}`,
+                  });
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              disabled={isSyncing}
+              className={`ml-4 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                isDark
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-red-600 hover:bg-red-700 text-white"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              Delete Temp Users
+            </button>
+          </div>
+        </motion.div>
+
         {/* Info Banner */}
         <div
           className={`p-4 rounded-lg ${
