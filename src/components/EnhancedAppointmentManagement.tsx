@@ -228,6 +228,8 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           const appointment = {
             id: doc.id,
             ...data,
+            // CRITICAL: Map userId from either userId or patientId
+            userId: data.userId || data.patientId || "", // Map patientId to userId
             appointmentDate: data.appointmentDate || data.date, // Use 'date' if 'appointmentDate' doesn't exist
             timeSlot: data.timeSlot || data.time, // Use 'time' if 'timeSlot' doesn't exist
             userName: data.userName || data.patientName || "Unknown Patient", // Map patientName to userName
@@ -241,12 +243,22 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           } as Appointment;
 
           console.log("  ✅ Mapped appointment:", {
+            userId: appointment.userId,
             userName: appointment.userName,
             userEmail: appointment.userEmail,
             serviceName: appointment.serviceName,
             amount: appointment.amount,
             paymentStatus: appointment.paymentStatus,
           });
+
+          // CRITICAL: Warn if userId is missing
+          if (!appointment.userId) {
+            console.warn(
+              "  ⚠️ WARNING: Appointment missing userId/patientId!",
+              doc.id,
+              "- Notifications will FAIL for this appointment"
+            );
+          }
 
           return appointment;
         });

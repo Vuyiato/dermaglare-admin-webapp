@@ -20,7 +20,19 @@ export const sendAppointmentApprovedNotification = async (
   }
 ) => {
   try {
+    // VALIDATION: Check required fields
+    if (!userId || userId.trim() === "") {
+      throw new Error(
+        "❌ CRITICAL: userId is missing or empty. Cannot send notification without userId!"
+      );
+    }
+    if (!userEmail || userEmail.trim() === "") {
+      throw new Error("❌ CRITICAL: userEmail is missing or empty.");
+    }
+
     console.log("📤 Sending approval notification to:", userName);
+    console.log("📝 Validation passed - userId:", userId);
+    console.log("📝 Validation passed - userEmail:", userEmail);
     console.log("📋 Appointment details:", appointmentDetails);
 
     const notificationData = {
@@ -83,7 +95,19 @@ export const sendAppointmentDeclinedNotification = async (
   }
 ) => {
   try {
+    // VALIDATION: Check required fields
+    if (!userId || userId.trim() === "") {
+      throw new Error(
+        "❌ CRITICAL: userId is missing or empty. Cannot send notification without userId!"
+      );
+    }
+    if (!userEmail || userEmail.trim() === "") {
+      throw new Error("❌ CRITICAL: userEmail is missing or empty.");
+    }
+
     console.log("📤 Sending decline notification to:", userName);
+    console.log("📝 Validation passed - userId:", userId);
+    console.log("📝 Validation passed - userEmail:", userEmail);
 
     const notificationData = {
       userId: userId,
