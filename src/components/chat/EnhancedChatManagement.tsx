@@ -321,6 +321,23 @@ export const EnhancedChatManagement: React.FC<EnhancedChatManagementProps> = ({
       const messagesRef = collection(db, "chats", selectedChatId, "messages");
       await addDoc(messagesRef, messageData);
 
+      // Send notification to patient
+      try {
+        const { notifyMessageRecipient } = await import("../../services/message-notification-service");
+        const selectedChat = chats.find((c) => c.id === selectedChatId);
+        if (selectedChat) {
+          await notifyMessageRecipient(
+            selectedChatId,
+            senderRole,
+            senderName,
+            senderRole as "admin" | "doctor",
+            newMessage.trim()
+          );
+        }
+      } catch (notifError) {
+        console.warn("?? Failed to send message notification:", notifError);
+      }
+
       // Update chat document with last message info
       const chatRef = doc(db, "chats", selectedChatId);
       await updateDoc(chatRef, {
@@ -908,3 +925,4 @@ export const EnhancedChatManagement: React.FC<EnhancedChatManagementProps> = ({
 };
 
 export default EnhancedChatManagement;
+
