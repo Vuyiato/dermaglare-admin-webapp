@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
+import { notificationService } from "../services/NotificationService";
 
 // =================================================================================================
 // TYPE DEFINITIONS
@@ -532,17 +533,36 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
     setActionLoading(true);
 
     try {
+      // Update appointment status (NOT payment status - that's separate)
       const appointmentRef = doc(db, "appointments", selectedAppointment.id);
       await updateDoc(appointmentRef, {
         status: "confirmed",
-        paymentStatus: "paid", // Mark payment as paid to update revenue
+        // NOTE: paymentStatus stays as-is until actual payment is received
         confirmedAt: serverTimestamp(),
         adminNotes: adminNotes || null,
         updatedAt: serverTimestamp(),
       });
 
-      // TODO: Send notification to patient via FCM
-      console.log("✅ Appointment approved, notification should be sent");
+      // Send notification to patient
+      try {
+        await notificationService.sendAppointmentApprovalNotification(
+          selectedAppointment.userId,
+          selectedAppointment.userEmail || "",
+          selectedAppointment.userName || "Patient",
+          {
+            appointmentId: selectedAppointment.id,
+            serviceName: selectedAppointment.serviceName,
+            appointmentDate: formatDate(selectedAppointment.appointmentDate),
+            timeSlot: selectedAppointment.timeSlot,
+            amount: selectedAppointment.amount,
+            adminNotes: adminNotes,
+          }
+        );
+        console.log("✅ Appointment approved and notification sent to patient");
+      } catch (notifError) {
+        console.error("⚠️ Failed to send notification:", notifError);
+        // Don't fail the approval if notification fails
+      }
 
       setShowApprovalModal(false);
       setAdminNotes("");
@@ -572,8 +592,25 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
         updatedAt: serverTimestamp(),
       });
 
-      // TODO: Send notification to patient
-      console.log("❌ Appointment declined, notification should be sent");
+      // Send notification to patient
+      try {
+        await notificationService.sendAppointmentDeclineNotification(
+          selectedAppointment.userId,
+          selectedAppointment.userEmail || "",
+          selectedAppointment.userName || "Patient",
+          {
+            appointmentId: selectedAppointment.id,
+            serviceName: selectedAppointment.serviceName,
+            appointmentDate: formatDate(selectedAppointment.appointmentDate),
+            timeSlot: selectedAppointment.timeSlot,
+            reason: reason,
+          }
+        );
+        console.log("✅ Appointment declined and notification sent to patient");
+      } catch (notifError) {
+        console.error("⚠️ Failed to send notification:", notifError);
+        // Don't fail the decline if notification fails
+      }
 
       setShowApprovalModal(false);
       setAdminNotes("");

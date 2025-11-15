@@ -93,7 +93,11 @@ export const ChatManagement: React.FC<ChatManagementProps> = ({
       const threads = await Promise.all(
         snapshot.docs.map(async (chatDoc) => {
           const data = chatDoc.data();
-          let userName = data.userName || "Unknown Patient";
+          let userName = data.patientName || data.userName || "Unknown Patient";
+
+          console.log(
+            `📋 Chat ${chatDoc.id}: patientName="${data.patientName}", patientId="${data.patientId}"`
+          );
 
           // Try to get senderId from the most recent message
           let senderId = null;
@@ -155,6 +159,9 @@ export const ChatManagement: React.FC<ChatManagementProps> = ({
                   fetchedName !== "Patient" &&
                   !fetchedName.match(/^[A-Za-z0-9]{8}$/)
                 ) {
+                  console.log(
+                    `✅ Found name for ${userId}: "${fetchedName}" (from users collection)`
+                  );
                   userName = fetchedName;
                   break; // Found a valid name, stop searching
                 }
