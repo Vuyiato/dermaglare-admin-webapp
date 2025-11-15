@@ -190,6 +190,7 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           snapshot.size,
           "documents"
         );
+        console.log("🔄 Real-time update detected at:", new Date().toLocaleTimeString());
         const appointmentsData = snapshot.docs.map((doc) => {
           const data = doc.data();
           console.log("📋 Appointment:", doc.id, data);
@@ -208,7 +209,14 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
             amount: data.amount,
             paymentStatus: data.paymentStatus,
             status: data.status,
+            paidAt: data.paidAt,
+            paymentTransactionId: data.paymentTransactionId,
           });
+          
+          // Highlight payment status changes
+          if (data.paymentStatus === "paid") {
+            console.log("  💳 ✅ PAYMENT CONFIRMED for appointment:", doc.id);
+          }
 
           // Map different field names for consistency
           const appointment = {
@@ -545,7 +553,14 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
 
       // Send notification to patient
       try {
-        await notificationService.sendAppointmentApprovalNotification(
+        console.log("📤 Attempting to send notification with data:", {
+          userId: selectedAppointment.userId,
+          userEmail: selectedAppointment.userEmail,
+          userName: selectedAppointment.userName,
+          appointmentId: selectedAppointment.id,
+        });
+        
+        const notificationId = await notificationService.sendAppointmentApprovalNotification(
           selectedAppointment.userId,
           selectedAppointment.userEmail || "",
           selectedAppointment.userName || "Patient",
@@ -559,6 +574,8 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           }
         );
         console.log("✅ Appointment approved and notification sent to patient");
+        console.log("📬 Notification ID:", notificationId);
+        alert("✅ Appointment approved! Notification sent to patient.");
       } catch (notifError) {
         console.error("⚠️ Failed to send notification:", notifError);
         // Don't fail the approval if notification fails
@@ -594,7 +611,13 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
 
       // Send notification to patient
       try {
-        await notificationService.sendAppointmentDeclineNotification(
+        console.log("📤 Attempting to send decline notification with data:", {
+          userId: selectedAppointment.userId,
+          userEmail: selectedAppointment.userEmail,
+          userName: selectedAppointment.userName,
+        });
+        
+        const notificationId = await notificationService.sendAppointmentDeclineNotification(
           selectedAppointment.userId,
           selectedAppointment.userEmail || "",
           selectedAppointment.userName || "Patient",
@@ -607,6 +630,8 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           }
         );
         console.log("✅ Appointment declined and notification sent to patient");
+        console.log("📬 Notification ID:", notificationId);
+        alert("✅ Appointment declined. Notification sent to patient.");
       } catch (notifError) {
         console.error("⚠️ Failed to send notification:", notifError);
         // Don't fail the decline if notification fails
