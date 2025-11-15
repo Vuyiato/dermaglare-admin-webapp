@@ -10,7 +10,10 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
-import { notificationService } from "../services/NotificationService";
+import {
+  sendAppointmentApprovedNotification,
+  sendAppointmentDeclinedNotification,
+} from "../services/notification-sender";
 
 // =================================================================================================
 // TYPE DEFINITIONS
@@ -190,7 +193,10 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           snapshot.size,
           "documents"
         );
-        console.log("🔄 Real-time update detected at:", new Date().toLocaleTimeString());
+        console.log(
+          "🔄 Real-time update detected at:",
+          new Date().toLocaleTimeString()
+        );
         const appointmentsData = snapshot.docs.map((doc) => {
           const data = doc.data();
           console.log("📋 Appointment:", doc.id, data);
@@ -212,7 +218,7 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
             paidAt: data.paidAt,
             paymentTransactionId: data.paymentTransactionId,
           });
-          
+
           // Highlight payment status changes
           if (data.paymentStatus === "paid") {
             console.log("  💳 ✅ PAYMENT CONFIRMED for appointment:", doc.id);
@@ -559,8 +565,8 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           userName: selectedAppointment.userName,
           appointmentId: selectedAppointment.id,
         });
-        
-        const notificationId = await notificationService.sendAppointmentApprovalNotification(
+
+        const notificationId = await sendAppointmentApprovedNotification(
           selectedAppointment.userId,
           selectedAppointment.userEmail || "",
           selectedAppointment.userName || "Patient",
@@ -570,7 +576,6 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
             appointmentDate: formatDate(selectedAppointment.appointmentDate),
             timeSlot: selectedAppointment.timeSlot,
             amount: selectedAppointment.amount,
-            adminNotes: adminNotes,
           }
         );
         console.log("✅ Appointment approved and notification sent to patient");
@@ -616,8 +621,8 @@ const EnhancedAppointmentManagement: React.FC<{ theme: Theme }> = ({
           userEmail: selectedAppointment.userEmail,
           userName: selectedAppointment.userName,
         });
-        
-        const notificationId = await notificationService.sendAppointmentDeclineNotification(
+
+        const notificationId = await sendAppointmentDeclinedNotification(
           selectedAppointment.userId,
           selectedAppointment.userEmail || "",
           selectedAppointment.userName || "Patient",

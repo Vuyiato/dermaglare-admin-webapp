@@ -3,6 +3,7 @@
 ## Issue 1: Payment Status Not Updating in Real-time
 
 ### What Should Happen:
+
 1. Patient pays on Patient Portal
 2. Patient Portal updates Firestore: `paymentStatus: "paid"`
 3. Admin Portal's `onSnapshot` listener detects change
@@ -11,7 +12,9 @@
 ### Debug Steps:
 
 #### Step 1: Check Patient Portal Payment Code
+
 Verify Patient Portal has this code after payment success:
+
 ```typescript
 await updateDoc(doc(db, "appointments", appointmentId), {
   paymentStatus: "paid",
@@ -22,6 +25,7 @@ await updateDoc(doc(db, "appointments", appointmentId), {
 ```
 
 #### Step 2: Check Firestore Console
+
 1. Go to: https://console.firebase.google.com/project/dermaglareapp/firestore
 2. Navigate to `appointments` collection
 3. Find the appointment that was paid
@@ -31,7 +35,9 @@ await updateDoc(doc(db, "appointments", appointmentId), {
    - `paymentTransactionId: "xyz123"`
 
 #### Step 3: Check Admin Portal Console
+
 Open browser console (F12) on Admin Portal and look for:
+
 ```
 🔄 Real-time update detected at: [time]
 📅 Appointments snapshot received: X documents
@@ -39,7 +45,9 @@ Open browser console (F12) on Admin Portal and look for:
 ```
 
 #### Step 4: Verify Firestore Rules
+
 Check `firestore.rules` allows updates:
+
 ```javascript
 match /appointments/{appointmentId} {
   allow read, update: if request.auth != null;
@@ -51,6 +59,7 @@ match /appointments/{appointmentId} {
 ## Issue 2: Notifications Not Appearing on Patient Portal
 
 ### What Should Happen:
+
 1. Admin approves appointment
 2. Admin Portal creates notification in Firestore
 3. Patient Portal listener detects new notification
@@ -59,7 +68,9 @@ match /appointments/{appointmentId} {
 ### Debug Steps:
 
 #### Step 1: Check Admin Portal Console After Approval
+
 Look for these logs:
+
 ```
 📤 Attempting to send notification with data: {...}
 🔴 Creating notification document in Firestore...
@@ -73,6 +84,7 @@ Look for these logs:
 If you see an error (❌), note the error message.
 
 #### Step 2: Check Firestore Console for Notifications
+
 1. Go to: https://console.firebase.google.com/project/dermaglareapp/firestore
 2. Navigate to `notifications` collection
 3. Verify a new document was created with:
@@ -90,7 +102,9 @@ If you see an error (❌), note the error message.
    ```
 
 #### Step 3: Check Patient Portal Has Notification Listener
+
 Patient Portal should have this code:
+
 ```typescript
 useEffect(() => {
   if (!currentUser) return;
@@ -102,9 +116,9 @@ useEffect(() => {
   );
 
   const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
-    const notifs = snapshot.docs.map(doc => ({
+    const notifs = snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
     setNotifications(notifs);
   });
@@ -114,22 +128,27 @@ useEffect(() => {
 ```
 
 #### Step 4: Check Firestore Security Rules
+
 Add this to `firestore.rules`:
+
 ```javascript
 match /notifications/{notificationId} {
-  allow read, update: if request.auth != null 
+  allow read, update: if request.auth != null
     && request.auth.uid == resource.data.userId;
   allow create: if request.auth != null;
 }
 ```
 
 Then redeploy rules:
+
 ```bash
 firebase deploy --only firestore:rules
 ```
 
 #### Step 5: Check Patient Portal Console
+
 Patient Portal console should show:
+
 ```
 📬 New notification received: {id: "...", title: "✅ Appointment Confirmed!", ...}
 ```
@@ -139,18 +158,22 @@ Patient Portal console should show:
 ## Common Issues & Solutions
 
 ### Issue: "userId is undefined or empty"
+
 **Cause**: Appointment doesn't have `userId` field  
 **Solution**: Check appointment document has `userId` or `patientId` field matching Firebase Auth UID
 
 ### Issue: Notification created but not visible
+
 **Cause**: Patient Portal not listening to notifications collection  
 **Solution**: Implement notification listener (see Step 3 above)
 
 ### Issue: Permission denied error
+
 **Cause**: Firestore security rules blocking notification creation  
 **Solution**: Update security rules (see Step 4 above)
 
 ### Issue: Payment updates not appearing
+
 **Cause**: Patient Portal not updating Firestore after payment  
 **Solution**: Add payment callback code (see Issue 1, Step 1)
 
@@ -159,6 +182,7 @@ Patient Portal console should show:
 ## Quick Test Script
 
 Run this in Patient Portal console to manually test notification:
+
 ```javascript
 // Test creating a notification manually
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -178,7 +202,7 @@ const testNotification = async () => {
       readAt: null,
       createdAt: serverTimestamp(),
     };
-    
+
     const docRef = await addDoc(collection(db, "notifications"), notif);
     console.log("✅ Test notification created:", docRef.id);
   } catch (error) {
@@ -194,6 +218,7 @@ testNotification();
 ## Real-time Update Test
 
 ### Admin Portal Test:
+
 1. Open Admin Portal in Browser Tab 1
 2. Open Firestore Console in Browser Tab 2
 3. In Firestore, manually edit an appointment:
@@ -202,6 +227,7 @@ testNotification();
 5. Check console for: "🔄 Real-time update detected"
 
 ### Notification Test:
+
 1. Open Admin Portal
 2. Open Firestore Console
 3. Click "Approve" on an appointment
@@ -223,6 +249,7 @@ testNotification();
 ## Expected Console Output (Successful Flow)
 
 ### When Admin Approves Appointment:
+
 ```
 📤 Attempting to send notification with data: {userId: "...", userEmail: "...", ...}
 🔴 Creating notification document in Firestore...
@@ -235,6 +262,7 @@ testNotification();
 ```
 
 ### When Payment Status Updates:
+
 ```
 🔄 Real-time update detected at: 10:30:45 AM
 📅 Appointments snapshot received: 15 documents

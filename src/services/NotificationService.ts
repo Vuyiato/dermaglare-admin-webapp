@@ -97,16 +97,21 @@ class NotificationService {
 
     try {
       console.log("🔴 Creating notification document in Firestore...");
-      console.log("📦 Notification data:", JSON.stringify(notification, null, 2));
-      
+      console.log(
+        "📦 Notification data:",
+        JSON.stringify(notification, null, 2)
+      );
+
       const docRef = await addDoc(this.notificationsCollection, notification);
-      
+
       console.log(
         `✅ Appointment approval notification sent to ${userName} (${userEmail})`
       );
       console.log("🎯 Notification document ID:", docRef.id);
-      console.log("🔗 Check Firestore Console: https://console.firebase.google.com/project/dermaglareapp/firestore/data/notifications");
-      
+      console.log(
+        "🔗 Check Firestore Console: https://console.firebase.google.com/project/dermaglareapp/firestore/data/notifications"
+      );
+
       return docRef.id;
     } catch (error) {
       console.error("❌ Error sending approval notification:", error);
@@ -149,16 +154,21 @@ class NotificationService {
 
     try {
       console.log("🔴 Creating decline notification in Firestore...");
-      console.log("📦 Notification data:", JSON.stringify(notification, null, 2));
-      
+      console.log(
+        "📦 Notification data:",
+        JSON.stringify(notification, null, 2)
+      );
+
       const docRef = await addDoc(this.notificationsCollection, notification);
-      
+
       console.log(
         `✅ Appointment decline notification sent to ${userName} (${userEmail})`
       );
       console.log("🎯 Notification document ID:", docRef.id);
-      console.log("🔗 Check Firestore Console: https://console.firebase.google.com/project/dermaglareapp/firestore/data/notifications");
-      
+      console.log(
+        "🔗 Check Firestore Console: https://console.firebase.google.com/project/dermaglareapp/firestore/data/notifications"
+      );
+
       return docRef.id;
     } catch (error) {
       console.error("❌ Error sending decline notification:", error);
