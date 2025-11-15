@@ -2808,7 +2808,9 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const fetchData = async () => {
+    console.log("🎯 fetchData() called - Starting data fetch...");
     setIsLoadingData(true);
+    console.log("⏳ isLoadingData set to TRUE");
     try {
       console.log("🔄 Fetching data from Firestore...");
       console.log("📊 Database reference:", db);
@@ -2874,7 +2876,15 @@ const AdminDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
+    console.log(
+      "🔍 Dashboard data fetch effect triggered. User:",
+      user ? user.email : "No user"
+    );
+    if (!user) {
+      console.log("⏸️ Skipping data fetch - no user logged in");
+      return;
+    }
+    console.log("🚀 Calling fetchData() for user:", user.email);
     fetchData();
   }, [user]);
 
@@ -2954,7 +2964,18 @@ const AdminDashboard: React.FC = () => {
   ];
 
   const renderPage = () => {
+    console.log(
+      "🎨 Rendering page:",
+      currentPage,
+      "| isLoadingData:",
+      isLoadingData,
+      "| appointments:",
+      appointments.length,
+      "| users:",
+      users.length
+    );
     if (isLoadingData) {
+      console.log("⏳ Showing loading spinner...");
       return (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
@@ -2966,8 +2987,16 @@ const AdminDashboard: React.FC = () => {
         </div>
       );
     }
+    console.log("✅ Data loaded, rendering", currentPage, "view");
     switch (currentPage) {
       case "Dashboard":
+        console.log(
+          "📊 Rendering DashboardView with",
+          appointments.length,
+          "appointments and",
+          users.length,
+          "users"
+        );
         return (
           <DashboardView
             appointments={appointments}
