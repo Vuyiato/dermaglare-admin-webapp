@@ -232,12 +232,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
               </motion.button>
 
               <div className="text-center mt-6">
-                <a
-                  href="#"
-                  className="text-brand-yellow hover:text-brand-yellow-light text-sm font-medium transition-colors"
-                >
-                  Forgot your password?
-                </a>
+                <span className="text-brand-yellow text-sm font-medium">
+                  Contact tech support
+                </span>
               </div>
             </form>
           </motion.div>

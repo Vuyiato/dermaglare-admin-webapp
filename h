@@ -1,0 +1,207 @@
+[33mcommit b4d685066c08f7d4e56b7036ec6d2e7c5cf058b7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Mon Nov 17 15:44:16 2025 +0200
+
+    Fix: Clean up unused props and errors in Layout and AdminDashboard
+
+[33mcommit c1872cb4aca17e9ff088a9ea009046f7e2772a8e[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Mon Nov 17 15:39:14 2025 +0200
+
+    Fix: Clean up unused props and errors in Layout and AdminDashboard
+
+[33mcommit c83702f94818a1d1ae401bf644ea32c284e704b4[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Sun Nov 16 13:22:38 2025 +0200
+
+    Fix: Handle undefined values in invoice filter to prevent crashes
+
+[33mcommit 5601c25ccd44471af86f59133fb854ed57ddc4fb[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Sat Nov 15 16:19:06 2025 +0200
+
+    Add comprehensive dashboard data loading logs
+
+[33mcommit 2f46f6b2d4531182dbcf5f1718726986a06d16f0[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Sat Nov 15 16:02:14 2025 +0200
+
+    Add message notification system with real-time delivery to patients
+
+[33mcommit c58f87f57c82a089b7ef78cfe6dad399b324c648[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Sat Nov 15 14:36:43 2025 +0200
+
+    Fix: Critical userId mapping and notification validation
+    
+    - Added userId mapping from patientId field (some appointments use patientId)
+    - Added validation in notification sender to catch missing userId/userEmail
+    - Added warning logs for appointments missing userId
+    - Added userId to mapped appointment console logs
+    - This fixes notifications not being sent due to missing userId field
+    
+    Root cause: Patient Portal uses 'patientId' but Admin expects 'userId'
+    Solution: Map patientId -> userId in appointment data processing
+
+[33mcommit eabd1a5a467fdb7db87787d3c6fb2663ba9214e7[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Sat Nov 15 14:25:39 2025 +0200
+
+    Apply: Simplified notification system from admin_notification_setup.md
+    
+    - Created new notification-sender.ts with direct Firestore writes
+    - Updated EnhancedAppointmentManagement to use new notification sender
+    - Simplified notification creation (removed complex NotificationService)
+    - Added detailed console logging for debugging
+    - Notifications now write directly to Firestore notifications collection
+
+[33mcommit 2f34e47826362011801167fc7c8e5df850f02f23[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Sat Nov 15 13:47:30 2025 +0200
+
+    Add: Enhanced debugging for payment updates and notifications
+    
+    - Added detailed console logging for real-time payment status updates
+    - Added notification creation debugging with full data output
+    - Added Firestore Console links for easy verification
+    - Added alert notifications when approval/decline actions complete
+    - Created comprehensive troubleshooting guide with debug steps
+
+[33mcommit de2951b3f7e3e66aa685fa203011aa35e071d599[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Sat Nov 15 13:22:44 2025 +0200
+
+    Fix: Separate approval from payment status and implement notification system
+    
+    - Fixed: Removed paymentStatus auto-change on appointment approval
+    - Added: Complete NotificationService for patient notifications
+    - Added: Notification sent when appointment approved/declined
+    - Added: Patient Portal integration guide with code examples
+    - Updated: EnhancedAppointmentManagement with notification integration
+    - Documented: Amount display issue (Patient Portal needs to send amount field)
+
+[33mcommit 8fe37ee53f209e605671faef4967e5f993310f8d[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 03:03:44 2025 +0200
+
+    Fix: Improve chat name display logic and add cleanup for temporary users
+
+[33mcommit 904609e4235406646174c317beb3fa67ef6d74d9[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:56:11 2025 +0200
+
+    Feature: Add sync users from chat messages to fix missing patient names
+
+[33mcommit 518cb59eee4a69f58c03f8251479666dbba9727d[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:49:21 2025 +0200
+
+    Fix: Correct sync logic and add debug logging for user sync
+
+[33mcommit 817ae7978b6885d8ba6f2c8e9279d614dcac22f9[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:44:28 2025 +0200
+
+    Critical Fix: Use Firebase Auth UID from appointments as Firestore document ID for proper chat integration
+
+[33mcommit 1fc24c53dd074a3014352e3ba014545041bdfa44[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:35:55 2025 +0200
+
+    Enhancement: Fetch patient name using senderId from chat messages
+
+[33mcommit 25f389ea907ec9251eb76a8397dad2036363310f[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:30:23 2025 +0200
+
+    Enhancement: Try multiple methods to fetch patient names in chat (userId, patientId, chatId, email)
+
+[33mcommit 52d0654f95818837ad6cdbc94584f0a302b31342[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:25:08 2025 +0200
+
+    Fix: Show actual patient names instead of 'Patient' in chat management
+
+[33mcommit 4302d53a3ec817ace88eb4a98258c2695f8006e0[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:16:59 2025 +0200
+
+    Enhancement: Auto-sync now updates existing users missing ID field
+
+[33mcommit c6b26dab295f7ff6a1aba5f7508f0d03a9f99699[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:11:31 2025 +0200
+
+    Fix: Remove unused email variable in auto-sync loop
+
+[33mcommit 5ba4b6a66a076e022a0d9c1b0690979a78e84949[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 02:07:37 2025 +0200
+
+    Fix: Ensure Firestore document ID matches user.id field in auto-sync
+
+[33mcommit cb65ffd0c0ff469f3bdd3b2324342db801263097[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 01:46:56 2025 +0200
+
+    Feature: Auto-sync users from appointments to Firestore with one click
+
+[33mcommit 40b11250a94eecefc41c6c0241ade083bc4abe6c[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 01:35:45 2025 +0200
+
+    Fix: Properly match users with their paid appointments using email
+
+[33mcommit 77d28f8a48938873a3cf9d34c43665bce01d2912[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 01:21:28 2025 +0200
+
+    Fix: Include users from appointments who aren't in Firestore users collection
+
+[33mcommit 256d66df90d668c28e4efa6a7e77cc714398904c[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 01:06:22 2025 +0200
+
+    Fix: Show all patients in dropdown regardless of role casing, sorted alphabetically
+
+[33mcommit ed44bbb98b70de01e6b34ac03b4c1926508c302e[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 00:57:05 2025 +0200
+
+    Feature: Create invoices from paid appointments - select patient and their paid services
+
+[33mcommit 03080c6a3343d4590c8a7909afb46aea9be2e166[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 00:39:41 2025 +0200
+
+    Fix: Approval modal background opacity + better invoice error handling
+
+[33mcommit 94472aa4be0f40270e743ba5a9cd4259019d4be0[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 00:24:55 2025 +0200
+
+    Fix: Create invoice button now works with loading state and error handling
+
+[33mcommit 608cde1e0170cbc1040eb2d381f2c657da452e8f[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Fri Nov 14 00:11:54 2025 +0200
+
+    Fix: Complete 8 bug fixes - notifications, forgot password, delete user, appointment modal, revenue calculation, decline workflow, invoice button, and chat names
+
+[33mcommit 62fe452ebd4a83e576d898f4ad0bd3643ed0ba81[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Thu Nov 13 21:28:27 2025 +0200
+
+    Fix TypeScript build errors: remove unused imports and variables
+
+[33mcommit 6ead15a3341d93a17448668503b44946df90e6b8[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Thu Nov 13 21:15:59 2025 +0200
+
+    Add Patient Portal compatible messaging system with real-time chat, admin/doctor roles, debug tools, and comprehensive documentation
+
+[33mcommit fca3c038224202b2f96220f9ee310d3327bf8740[m
+Author: Vuyisile Thato Shokane <vuyiato1@gmail.com>
+Date:   Mon Nov 10 20:33:02 2025 +0200
+
+    Initial commit: DermaGlare Admin Portal with invoices, appointments, user management, admin security, and data migration tools

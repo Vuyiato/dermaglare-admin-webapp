@@ -75,7 +75,6 @@ interface Page {
     | "Services"
     | "Chatbot Knowledge"
     | "User Sync"
-    | "Data Migration"
     | "Settings";
   icon: string;
 }
@@ -2954,10 +2953,6 @@ const AdminDashboard: React.FC = () => {
       icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
     },
     {
-      name: "Data Migration",
-      icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4",
-    },
-    {
       name: "Settings",
       icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z",
     },
@@ -3016,7 +3011,15 @@ const AdminDashboard: React.FC = () => {
         return (
           <UserSyncView theme={theme} onSyncComplete={() => fetchData()} />
         );
-      case "Data Migration":
+
+        // Force logout admin on reload
+        useEffect(() => {
+          const handleReload = async () => {
+            await signOut(auth);
+          };
+          window.addEventListener("beforeunload", handleReload);
+          return () => window.removeEventListener("beforeunload", handleReload);
+        }, []);
         return <AppointmentDataMigration theme={theme} />;
       case "Settings":
         return <SettingsView user={user} theme={theme} setTheme={setTheme} />;
